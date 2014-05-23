@@ -72,8 +72,21 @@ function paintTestArea(){
 	else
 		ctx.fillStyle = "rgb(0,255,0)";
 	ctx.fillRect(target.x, target.y, subject.width, subject.height);
+	
+	ctx.beginPath();
+	ctx.moveTo(subject.x, subject.y);
+	ctx.lineTo(target.x, target.y);
+	
+	ctx.moveTo(subject.x+subject.width, subject.y);
+	ctx.lineTo(target.x+subject.width, target.y);
+	
+	ctx.moveTo(subject.x, subject.y+subject.height);
+	ctx.lineTo(target.x, target.y+subject.height);
+	
+	ctx.moveTo(subject.x+subject.width, subject.y+subject.height);
+	ctx.lineTo(target.x+subject.width, target.y+subject.height);
 
-
+	ctx.stroke();	
 }
 
 setInterval(paintTestArea, 30);
