@@ -35,26 +35,28 @@ function checkForCollisionsContin(subject, objects, prime_step, num_steps, sec_s
 	var collisions;
 	var off_step_guage = 0;
 	var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
+	var checked_areas = [];
+	var considered = objects;
 	for(var i = 0; i<=num_steps; i++){
-		
+		checked_areas.push({x:subject_clone.x, y:subject_clone.y, width:subject_clone.width, height:subject_clone.height});
 		//console.log("checking for objects in "+JSON.stringify(subject_clone));
 		collisions = checkForCollisionsDiscrete(subject_clone, objects);
-		if(collisions) return {candidates:collisions, steps:i};
-		else{
+		if(collisions){ return {result:true, candidates:collisions, steps:i, checked_areas:checked_areas, considered:considered};
+		}else{
 			addCollisionStep(subject_clone, prime_step);
 			off_step_guage += sec_per_step;
-			var num_up = 0;
+			//var num_up = 0;
 			//console.log("guage contains "+off_step_guage+" having added "+sec_per_step);	
 			while(off_step_guage>1){
 				addCollisionStep(subject_clone, sec_step);	
 				off_step_guage -= 1;
-				num_up++;
+				//num_up++;
 			}
-			console.log("updated "+num_up+" times.");
+			//console.log("updated "+num_up+" times.");
 		}
 	}
 	//console.log("i = "+i);
-	return false;
+	return {result: false, checked_areas:checked_areas, considered:considered};
 }
 
 function addCollisionStep(subject, step){
@@ -112,66 +114,86 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 		sec_step.y = 0;
 		sec_step.x = subject.v_x<0 ? -1: 1;
 		steps = Math.abs(Math.ceil(subject.v_y/subject.height))+1;
-		if(steps <= 1){
-			console.log(subject.v_y, subject.height, subject.v_y/subject.height);
-		}
 		sec_per_step = Math.abs((subject.v_x/subject.v_y)*subject.height);//Not sure about this math. Check on paper.
 		clone.width = subject.width+sec_per_step;
 		clone.height = subject.height*2;
 	}
 
-	console.log("by size step = {"+JSON.stringify(prime_step)+", "+JSON.stringify(sec_step)+", "+steps+","+sec_per_step+"}");
+	//console.log("by size step = {"+JSON.stringify(prime_step)+", "+JSON.stringify(sec_step)+", "+steps+","+sec_per_step+"}");
 	//check collisions in steps
-	console.log("Clone = "+JSON.stringify(clone));
-	var results = checkForCollisionsContin(clone, candidates, prime_step, steps, sec_step, sec_per_step);
-	console.log("cleared at large step contin where result = "+JSON.stringify(results));
-	return results.candidates;
-	//If one or zero, result is as precise as necessary.
-	//if(!results /*|| results.candidates.length==1*/){
-	//	/*console.log("cleared at large step contin where result = "+JSON.stringify(results));*/ return results.candidates;
-	
-		//console.log("Large phantom or multiple");
-	//	return results.candidates;
-	//}//create a clone at a matched position
+	//console.log("Clone = "+JSON.stringify(clone));
 	var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
-	var off_step_guage;
-	for(var s = 0; s<results.steps; s++){
-		addCollisionStep(subject_clone, prime_step);
-		off_step_guage += sec_per_step;
+	var tracked_steps = 0;
+	do{
+		//console.log("clone "+JSON.stringify(clone));
+		//console.log("tracked_steps = "+tracked_steps);
+		var results = checkForCollisionsContin(clone, candidates, prime_step, steps-tracked_steps, sec_step, sec_per_step);
+		
+		if(results.result){
+	
+			var off_step_guage = 0;
+			for(var s = 0; s<results.steps; s++){
+				addCollisionStep(subject_clone, prime_step);
+				off_step_guage += sec_per_step;
 			
-		while(off_step_guage>1){
-			addCollisionStep(subject_clone, sec_step);	
-			off_step_guage -= 1;
+				while(off_step_guage>1){
+					addCollisionStep(subject_clone, sec_step);	
+					off_step_guage -= 1;
+				}
 			}
-	}
 
-	//Resize steps
-	if(Math.abs(subject.v_x)>Math.abs(subject.v_y)){
-		prime_step.x = subject.v_x<0 ? -1: 1;
-		prime_step.y = 0;	
-		sec_step.x = 0;
-		sec_step.y = subject.v_x<0 ? -1: 1;
-		steps = subject.width;
-		sec_per_step = subject.v_y/subject.v_x;
-	}else{
-		prime_step.y = subject.v_y<0 ? -1: 1;
-		prime_step.x = 0;
-		sec_step.y = 0;
-		sec_step.x = subject.v_x<0 ? -1: 1;
-		steps = subject.height;
-		sec_per_step = subject.v_x/subject.v_y//Not sure about this math. Check on paper.
-	}
+			var inner_prime_step = {}; 
+			var inner_sec_step = {}; 
+			var inner_steps = 0;
+			var inner_sec_per_step = 0;
+			//Resize steps
+			if(Math.abs(subject.v_x)>Math.abs(subject.v_y)){
+				inner_prime_step.x = subject.v_x<0 ? -1: 1;
+				inner_prime_step.y = 0;	
+				inner_sec_step.x = 0;
+				inner_sec_step.y = subject.v_y<0 ? -1: 1;
+				inner_steps = subject.width;
+				inner_sec_per_step = Math.abs(subject.v_y/subject.v_x);
+			}else{
+				inner_prime_step.y = subject.v_y<0 ? -1: 1;
+				inner_prime_step.x = 0;
+				inner_sec_step.y = 0;
+				inner_sec_step.x = subject.v_x<0 ? -1: 1;
+				inner_steps = subject.height;
+				inner_sec_per_step = Math.abs(subject.v_x/subject.v_y)//Not sure about this math. Check on paper.
+			}
+	
+			//incrementally move 1 pixel at a time until collision is found. update secondary dimension accordingly. 
+		  //console.log("subject_clone = "+JSON.stringify(subject_clone));
+			//console.log("clone = "+JSON.stringify(clone));
+			//console.log("by pixel step = {"+JSON.stringify(inner_prime_step)+", "+JSON.stringify(inner_sec_step)+", "+inner_steps+","+inner_sec_per_step+"}");
+			var finalResults = checkForCollisionsContin(subject_clone, results.candidates, inner_prime_step, inner_steps, inner_sec_step, inner_sec_per_step);
+			return finalResults;
+		}else{
+			return finalResults;
+		
+			if(finalResults.result){
+				//console.log(JSON.stringify(finalResults));
+				//console.log("cleared at small step contin"); 
+				return results.candidates;
+			}
 
-	//incrementally move 1 pixel at a time until collision is found. update secondary dimension accordingly. 
-  //console.log("by pixel step = {"+JSON.stringify(prime_step)+", "+JSON.stringify(sec_step)+", "+steps+","+sec_per_step+"}");
-	var finalResults = checkForCollisionsContin(subject_clone, results.candidates, prime_step, steps, sec_step, sec_per_step);
-	if(finalResults){
-		//console.log("cleared at small step contin"); 
-		return results.candidates;}
-	else{
-		//console.log("Warning, Phantom detected");
-		return false;
-	}
+			off_step_guage = 0;
+			for(var s = 0; s<results.steps; s++){
+				addCollisionStep(clone, prime_step);
+				off_step_guage += sec_per_step;
+			
+				while(off_step_guage>1){
+					addCollisionStep(clone, sec_step);	
+					off_step_guage -= 1;
+				}
+			}
+		}
+		tracked_steps += results.step;
+				
+	}while(tracked_steps<steps);
+	console.log("exited loop");
+	return results.candidates;
 }
 
 function test(test_func, expected_result, message){

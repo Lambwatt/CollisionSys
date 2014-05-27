@@ -7,14 +7,16 @@ var obstacles = [
  {colliding:false, x:400, y:200, width:50, height:50},
  {colliding:false, x:370, y:200, width:50, height:50},
  {colliding:false, x:360, y:400, width:50, height:50},
- {colliding:false, x:420, y:400, width:50, height:50},
- {colliding:false, x:50, y:450, width:50, height:50}
+ {colliding:false, x:400, y:400, width:50, height:50},
+ {colliding:false, x:50, y:450, width:50, height:50},
+ {coliding:false, x:330, y:155, width:50, height:50}
  /*{coliding:false, x:250, y:250, width:50, height:50}
- {coliding:false, x:250, y:250, width:50, height:50}
  {coliding:false, x:250, y:250, width:50, height:50}
 */]
 
 var is_colliding = false;
+var detailedSearchRegions = [];
+var candidates = [];
 
 //collision cycle
 function checkForCollisions(){
@@ -25,19 +27,24 @@ function checkForCollisions(){
 		obstacles[i].colliding = false;
 	}
 	is_colliding = false;
-	
+
+	candidates = [];
+	detailedSearchRegions = [];
 	var result = checkForCollisionsDynamic(subject, obstacles, 1, 1);
 	if(result){
+		detailedSearchRegions = result.checked_areas;
+		candidates = result.considered;
+		console.log(detailedSearchRegions.length);
 		//console.log("returned collision with "+result.length+" objects");
-		for(i in result){
+		for(i in result.candidates){
 			//console.log("set_colliding to true");
-			result[i].colliding=true;
+			result.candidates[i].colliding=true;
 		}
 		is_colliding = true;
 	}
 }
 
-setInterval(checkForCollisions, 250);
+//setInterval(checkForCollisions, 250);
 
 //window stuff
 window.requestAnimFrame = (function(callback) {
@@ -85,8 +92,22 @@ function paintTestArea(){
 	
 	ctx.moveTo(subject.x+subject.width, subject.y+subject.height);
 	ctx.lineTo(target.x+subject.width, target.y+subject.height);
-
 	ctx.stroke();	
+
+	ctx.fillStyle = "rgb(255,0,255)";
+	//console.log(JSON.stringify(detailedSearchRegions));
+	for(var j in detailedSearchRegions){
+		console.log("drawing a rectangle on "+JSON.stringify(detailedSearchRegions[j]));
+		ctx.fillRect(detailedSearchRegions[j].x, detailedSearchRegions[j].y, detailedSearchRegions[j].width, detailedSearchRegions[j].height);
+	}
+	
+	ctx.fillStyle = "rgb(123,0,255)";
+	//console.log(JSON.stringify(detailedSearchRegions));
+	/*for(var k in considered){
+		console.log("drawing a rectangle on "+JSON.stringify(detailedSearchRegions[j]));
+		ctx.fillRect(detailedSearchRegions[j].x, detailedSearchRegions[j].y, detailedSearchRegions[j].width, detailedSearchRegions[j].height);
+	}*/
+//	console.log("did I draw "+j+" rectangles?");
 }
 
 setInterval(paintTestArea, 30);
@@ -96,4 +117,8 @@ canvas.addEventListener("mousemove", function(e){
         target.y = Math.floor((e.pageY - this.offsetTop));
 });
 
-
+canvas.addEventListener("mouseup", function(e){
+	  checkForCollisions();
+    //    target.x = Math.floor((e.pageX - this.offsetLeft));
+      //  target.y = Math.floor((e.pageY - this.offsetTop));
+});
