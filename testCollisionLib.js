@@ -4,10 +4,10 @@ var obstacles = [
  {colliding:false, x:0, y:0, width:50, height:50},
  {colliding:false, x:250, y:125, width:50, height:50},
  {colliding:false, x:125, y:300, width:50, height:50},
- {colliding:false, x:400, y:200, width:50, height:50},
- {colliding:false, x:370, y:200, width:50, height:50},
+// {colliding:false, x:400, y:200, width:50, height:50},
+// {colliding:false, x:370, y:200, width:50, height:50},
  {colliding:false, x:360, y:400, width:50, height:50},
- {colliding:false, x:400, y:400, width:50, height:50},
+ {colliding:false, x:450, y:400, width:50, height:50},
  {colliding:false, x:50, y:450, width:50, height:50},
  {colliding:false, x:330, y:155, width:50, height:50}
  /*{coliding:false, x:250, y:250, width:50, height:50}
@@ -43,7 +43,7 @@ function checkForCollisions(){
 			//console.log("set_colliding to true");
 			result.candidates[i].colliding=true;
 		}
-		is_colliding = true;
+		is_colliding = result.result;
 	}
 }
 
