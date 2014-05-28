@@ -1,5 +1,4 @@
-var subject = {x:250, y:250, width:100, height:100}
-var target = {x:0, y:0}
+var subject = {x:0, y:0, width:100, height:100}
 var obstacles = [
  {colliding:false, x:0, y:0, width:50, height:50},
  {colliding:false, x:250, y:125, width:50, height:50},
@@ -9,7 +8,7 @@ var obstacles = [
  {colliding:false, x:360, y:400, width:50, height:50},
  {colliding:false, x:400, y:400, width:50, height:50},
  {colliding:false, x:50, y:450, width:50, height:50},
- {colliding:false, x:330, y:155, width:50, height:50}
+ {coliding:false, x:330, y:155, width:50, height:50}
  /*{coliding:false, x:250, y:250, width:50, height:50}
  {coliding:false, x:250, y:250, width:50, height:50}
 */]
@@ -20,24 +19,19 @@ var candidates = [];
 
 //collision cycle
 function checkForCollisions(){
-	subject.v_x = target.x-subject.x;
-	subject.v_y = target.y-subject.y;
 
 	for(var i in obstacles){
 		obstacles[i].colliding = false;
 	}
 	is_colliding = false;
 
-	console.log("target is "+JSON.stringify(target));
-	console.log("subject is "+JSON.stringify(subject));
-
 	candidates = [];
 	detailedSearchRegions = [];
-	var result = checkForCollisionsDynamic(subject, obstacles, 1, 1);
+	var result = checkForCollisionsDiscrete(subject, obstacles);
 	if(result){
-		detailedSearchRegions = result.checked_areas;
-		candidates = result.considered;
-		console.log(detailedSearchRegions.length);
+		//detailedSearchRegions = result.checked_areas;
+		//candidates = result.considered;
+		//console.log(detailedSearchRegions.length);
 		//console.log("returned collision with "+result.length+" objects");
 		for(i in result.candidates){
 			//console.log("set_colliding to true");
@@ -72,18 +66,15 @@ function paintTestArea(){
 			ctx.fillRect(obstacles[i].x,obstacles[i].y,obstacles[i].width,obstacles[i].height);
 		
 		}
-	}
-	
-	ctx.fillStyle = "rgb(0,0,255)";
-	ctx.fillRect(subject.x, subject.y, subject.width, subject.height);
+	}	
 
 	if(is_colliding)
 		ctx.fillStyle = "rgb(255,0,0)";
 	else
 		ctx.fillStyle = "rgb(0,255,0)";
-	ctx.fillRect(target.x, target.y, subject.width, subject.height);
+	ctx.fillRect(subject.x, subject.y, subject.width, subject.height);
 	
-	ctx.beginPath();
+	/*ctx.beginPath();
 	ctx.moveTo(subject.x, subject.y);
 	ctx.lineTo(target.x, target.y);
 	
@@ -96,11 +87,11 @@ function paintTestArea(){
 	ctx.moveTo(subject.x+subject.width, subject.y+subject.height);
 	ctx.lineTo(target.x+subject.width, target.y+subject.height);
 	ctx.stroke();	
-
+/*
 	ctx.fillStyle = "rgb(255,0,255)";
 	//console.log(JSON.stringify(detailedSearchRegions));
 	for(var j in detailedSearchRegions){
-		//console.log("drawing a rectangle on "+JSON.stringify(detailedSearchRegions[j]));
+		console.log("drawing a rectangle on "+JSON.stringify(detailedSearchRegions[j]));
 		ctx.fillRect(detailedSearchRegions[j].x, detailedSearchRegions[j].y, detailedSearchRegions[j].width, detailedSearchRegions[j].height);
 	}
 	
@@ -116,8 +107,8 @@ function paintTestArea(){
 setInterval(paintTestArea, 30);
 
 canvas.addEventListener("mousemove", function(e){
-        target.x = Math.floor((e.pageX - this.offsetLeft));
-        target.y = Math.floor((e.pageY - this.offsetTop));
+        subject.x = Math.floor((e.pageX - this.offsetLeft));
+        subject.y = Math.floor((e.pageY - this.offsetTop));
 });
 
 canvas.addEventListener("mouseup", function(e){
