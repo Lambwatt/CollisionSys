@@ -22,9 +22,9 @@ function checkForCollisionsDiscrete(subject, objects){
 	var result = [];
 	//console.log("running with subject"+JSON.stringify(subject));
 	for(var i in objects){
-		console.log("tested "+JSON.stringify(objects[i]))
+		//console.log("tested "+JSON.stringify(objects[i]))
 		if(checkForCollisionSingular(subject, objects[i])){
-			console.log("pushed "+JSON.stringify(objects[i]));
+			//console.log("pushed "+JSON.stringify(objects[i]));
 			result.push(objects[i]);
 		}
 	}
@@ -43,10 +43,10 @@ function checkForCollisionsContin(subject, objects, prime_step, num_steps, sec_s
 	var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
 	var checked_areas = [];
 	var considered = objects;
-	console.log("considering "+objects.length+" candidates with steps "+JSON.stringify(prime_step)+" and "+JSON.stringify(sec_step));
-	for(var i = 0; i<=num_steps; i++){
+	console.log("considering "+JSON.stringify(objects)+" candidates with steps "+JSON.stringify(prime_step)+" and "+JSON.stringify(sec_step));
+	for(var i = 0; i<num_steps; i++){
 		checked_areas.push({x:subject_clone.x, y:subject_clone.y, width:subject_clone.width, height:subject_clone.height});
-		console.log("checking for objects in "+JSON.stringify(subject_clone));
+		//console.log("checking for objects in "+JSON.stringify(subject_clone));
 		collisions = checkForCollisionsDiscrete(subject_clone, objects);
 		if(collisions){
 			 console.log("returned "+collisions.length+" candidates");
@@ -112,29 +112,34 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 		prime_step.y = 0;	
 		sec_step.x = 0;
 		sec_step.y = subject.v_y<0 ? -1: 1;
-		steps = Math.abs(Math.ceil(subject.v_x/subject.width)); //need to subtract one to prevent over reach, do the same for y
+		steps = Math.ceil(Math.abs(subject.v_x)/subject.width); //need to subtract one to prevent over reach, do the same for y
 		sec_per_step = Math.abs((subject.v_y/subject.v_x)*subject.width);
 		clone.width = subject.width*2, 
 		clone.height = subject.height+sec_per_step;
+		clone.x = subject.x-subject.width*use_box_x;
+		clone.y = subject.y-sec_per_step*use_box_y;
 	}else{
 		prime_step.y = subject.height * (subject.v_y<0 ? -1: 1);//subject.height;
 		prime_step.x = 0;
 		sec_step.y = 0;
 		sec_step.x = subject.v_x<0 ? -1: 1;
-		steps = Math.abs(Math.ceil(subject.v_y/subject.height));
+		steps = Math.ceil(Math.abs(subject.v_y)/subject.height);
+		console.log(subject.v_y, subject.height, subject.v_y/subject.height, steps);
 		sec_per_step = Math.abs((subject.v_x/subject.v_y)*subject.height);//Not sure about this math. Check on paper.
 		clone.width = subject.width+sec_per_step;
 		clone.height = subject.height*2;
+		clone.x = subject.x-sec_per_step*use_box_x;
+		clone.y = subject.y-subject.height*use_box_y;
+
 	}
-	clone.x = subject.x-subject.width*use_box_x;
-	clone.y = subject.y-sec_per_step*use_box_y;
-	
+
+
 	//check collisions in steps
 	var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
 	var tracked_steps = 0;
 	var rounds = 0;
 	do{
-		
+		console.log("running for "+(steps-tracked_steps)+" steps.");
 		var results = checkForCollisionsContin(clone, candidates, prime_step, steps-tracked_steps, sec_step, sec_per_step);
 			
 		if(results.result){

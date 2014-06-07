@@ -77,12 +77,7 @@ function paintTestArea(){
 	ctx.fillStyle = "rgb(0,0,255)";
 	ctx.fillRect(subject.x, subject.y, subject.width, subject.height);
 
-	if(is_colliding)
-		ctx.fillStyle = "rgb(255,0,0)";
-	else
-		ctx.fillStyle = "rgb(0,255,0)";
-	ctx.fillRect(target.x, target.y, subject.width, subject.height);
-	
+
 	ctx.beginPath();
 	ctx.moveTo(subject.x, subject.y);
 	ctx.lineTo(target.x, target.y);
@@ -111,6 +106,11 @@ function paintTestArea(){
 		ctx.fillRect(detailedSearchRegions[j].x, detailedSearchRegions[j].y, detailedSearchRegions[j].width, detailedSearchRegions[j].height);
 	}*/
 //	console.log("did I draw "+j+" rectangles?");
+	if(is_colliding)
+		ctx.fillStyle = "rgb(255,0,0)";
+	else
+		ctx.fillStyle = "rgb(0,255,0)";
+	ctx.fillRect(target.x, target.y, subject.width, subject.height);
 }
 
 setInterval(paintTestArea, 30);
