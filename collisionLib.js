@@ -29,7 +29,7 @@ function checkForCollisionsDiscrete(subject, objects){
 		}
 	}
 	if(result.length>0){
-		console.log("candidates contained "+JSON.stringify(result));
+		//console.log("candidates contained "+JSON.stringify(result));
 		return result;
 	}else{
 		return false;
@@ -43,13 +43,13 @@ function checkForCollisionsContin(subject, objects, prime_step, num_steps, sec_s
 	var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
 	var checked_areas = [];
 	var considered = objects;
-	console.log("considering "+JSON.stringify(objects)+" candidates with steps "+JSON.stringify(prime_step)+" and "+JSON.stringify(sec_step));
+	//console.log("considering "+JSON.stringify(objects)+" candidates with steps "+JSON.stringify(prime_step)+" and "+JSON.stringify(sec_step));
 	for(var i = 0; i<num_steps; i++){
 		checked_areas.push({x:subject_clone.x, y:subject_clone.y, width:subject_clone.width, height:subject_clone.height});
 		//console.log("checking for objects in "+JSON.stringify(subject_clone));
 		collisions = checkForCollisionsDiscrete(subject_clone, objects);
 		if(collisions){
-			 console.log("returned "+collisions.length+" candidates");
+			 //console.log("returned "+collisions.length+" candidates");
 			 return {result:true, candidates:collisions, steps:i, checked_areas:checked_areas, considered:considered};
 		}else{
 			
@@ -66,7 +66,7 @@ function checkForCollisionsContin(subject, objects, prime_step, num_steps, sec_s
 		}
 	}
 	//console.log("i = "+i);
-	console.log("returned no collision after "+i+" tries");
+	//console.log("returned no collision after "+i+" tries");
 	return {result: false, steps:num_steps, checked_areas:checked_areas, considered:considered};
 }
 
@@ -124,7 +124,7 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 		sec_step.y = 0;
 		sec_step.x = subject.v_x<0 ? -1: 1;
 		steps = Math.ceil(Math.abs(subject.v_y)/subject.height);
-		console.log(subject.v_y, subject.height, subject.v_y/subject.height, steps);
+		//console.log(subject.v_y, subject.height, subject.v_y/subject.height, steps);
 		sec_per_step = Math.abs((subject.v_x/subject.v_y)*subject.height);//Not sure about this math. Check on paper.
 		clone.width = subject.width+sec_per_step;
 		clone.height = subject.height*2;
@@ -139,7 +139,7 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 	var tracked_steps = 0;
 	var rounds = 0;
 	do{
-		console.log("running for "+(steps-tracked_steps)+" steps.");
+		//console.log("running for "+(steps-tracked_steps)+" steps.");
 		var results = checkForCollisionsContin(clone, candidates, prime_step, steps-tracked_steps, sec_step, sec_per_step);
 			
 		if(results.result){
@@ -177,12 +177,12 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 			}
 	
 			//incrementally move 1 pixel at a time until collision is found. update secondary dimension accordingly. 
-			console.log(JSON.stringify(subject_clone), JSON.stringify(results.candidates));
+			//console.log(JSON.stringify(subject_clone), JSON.stringify(results.candidates));
 			var detailedResults = checkForCollisionsContin(subject_clone, results.candidates, inner_prime_step, inner_steps, inner_sec_step, inner_sec_per_step);
 		
 			if(detailedResults.result){
-				console.log("detected in detail")
-				return detailedResults;
+				//console.log("detected in detail")
+				return detailedResults.candidates;
 			}
 
 			off_step_guage = 0;
@@ -205,19 +205,19 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 			}		
 		}
 		tracked_steps += results.steps+1;
-		console.log(tracked_steps, steps);
+		//console.log(tracked_steps, steps);
 		rounds+=1;		
 	}while(tracked_steps<steps);
-	console.log("exited loop after "+rounds+"rounds");
+	//console.log("exited loop after "+rounds+"rounds");
 	//var lastResults = checkCollisionDiscrete({},)
-	results.result= false;	
-	return results;// false;//results.candidates;
+	//results.result = false;	
+	return false;// false;//results.candidates;
 }
 
 function test(test_func, expected_result, message){
-	console.log("expecting "+expected_result);
+	//console.log("expecting "+expected_result);
 	if(test_func != expected_result){
-		console.log("FAILED: "+message);
+		//console.log("FAILED: "+message);
 		return 1;
 	}
 	return 0;
@@ -244,9 +244,9 @@ function testDiscrete(){
 
 	var result = checkForCollisionsDiscrete({x:2, y:2, width:4, height:4}, objs);	
 	if(result.length!=4){
-		console.log("Failed. Detected:");
+		//console.log("Failed. Detected:");
 		for(var i in result){
-			console.log(result[i].name);
+		//	console.log(result[i].name);
 		}
 		return 1
 	}
@@ -290,4 +290,3 @@ function testLib(){
 }
 
 //testLib();
-
