@@ -39,7 +39,7 @@ function checkForCollisionsDiscrete(subject, objects){
 function checkForCollisionsContin(subject, objects, prime_step, num_steps, sec_step, sec_per_step){
 	
 	var collisions;
-	var off_step_guage = 0;
+	var off_step_guage = 0.5;
 	var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
 	var checked_areas = [];
 	var considered = objects;
@@ -144,7 +144,7 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 			
 		if(results.result){
 	
-			var off_step_guage = 0;
+			var off_step_guage = 0.5;
 			for(var s = 0; s<results.steps; s++){
 				addCollisionStep(subject_clone, prime_step);
 				off_step_guage += sec_per_step;
@@ -185,7 +185,7 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 				return detailedResults.candidates;
 			}
 
-			off_step_guage = 0;
+			off_step_guage = 0.5;
 			for(var s = 0; s<=results.steps; s++){
 				addCollisionStep(clone, prime_step);
 				off_step_guage += sec_per_step;
@@ -195,7 +195,7 @@ function checkForCollisionsDynamic(subject, objects, min_width, min_height){
 					off_step_guage -= 1;
 				}
 			}
-			off_step_guage = 0;
+			off_step_guage = 0.5;
 			addCollisionStep(subject_clone, prime_step);
 			off_step_guage += sec_per_step;
 				
