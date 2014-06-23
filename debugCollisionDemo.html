@@ -1,0 +1,354 @@
+<html>
+	<head>
+    </head>
+	<body>
+		<canvas id="canvas" height=1000 width=1000>This browser does not support canvas</canvas>
+		<script> 
+			function checkForCollisionSingular(subject, object){
+				/*if(!(subject.x>object.x+object.width
+					||subject.x+subject.width<object.x
+					||subject.y>object.y+object.height
+					||subject.y+subject.height<object.y)){
+				*/
+				var rightOf = subject.x>=object.x+object.width
+				var leftOf = subject.x+subject.width<=object.x
+				var below = subject.y>=object.y+object.height
+				var above = subject.y+subject.height<=object.y
+				//console.log(rightOf+":"+leftOf+":"+below+":"+above);
+				if(!(rightOf||leftOf||below||above))
+				{
+					//console.log(true);
+					return true;
+				}
+				//console.log(false);
+				return false;
+			}
+
+			function checkForCollisionsDiscrete(subject, objects){
+				var result = [];
+				//console.log("running with subject"+JSON.stringify(subject));
+				for(var i in objects){
+					//console.log("tested "+JSON.stringify(objects[i]))
+					if(checkForCollisionSingular(subject, objects[i])){
+						//console.log("pushed "+JSON.stringify(objects[i]));
+						result.push(objects[i]);
+					}
+				}
+				if(result.length>0){
+					console.log("candidates contained "+JSON.stringify(result));
+					return result;
+				}else{
+					return false;
+				}
+			}
+
+			function checkForCollisionsContin(subject, objects, prime_step, num_steps, sec_step, sec_per_step){
+				
+				var collisions;
+				var off_step_guage = 0;
+				var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
+				var checked_areas = [];
+				var considered = objects;
+				console.log("considering "+JSON.stringify(objects)+" candidates with steps "+JSON.stringify(prime_step)+" and "+JSON.stringify(sec_step));
+				for(var i = 0; i<num_steps; i++){
+					checked_areas.push({x:subject_clone.x, y:subject_clone.y, width:subject_clone.width, height:subject_clone.height});
+					//console.log("checking for objects in "+JSON.stringify(subject_clone));
+					collisions = checkForCollisionsDiscrete(subject_clone, objects);
+					if(collisions){
+						 console.log("returned "+collisions.length+" candidates");
+						 return {result:true, candidates:collisions, steps:i, checked_areas:checked_areas, considered:considered};
+					}else{
+						
+						addCollisionStep(subject_clone, prime_step);
+						off_step_guage += sec_per_step;
+						//var num_up = 0;
+						//console.log("guage contains "+off_step_guage+" having added "+sec_per_step);	
+						while(off_step_guage>1){
+							addCollisionStep(subject_clone, sec_step);	
+							off_step_guage -= 1;
+							//num_up++;
+						}
+						//console.log("updated "+num_up+" times.");
+					}
+				}
+				//console.log("i = "+i);
+				console.log("returned no collision after "+i+" tries");
+				return {result: false, steps:num_steps, checked_areas:checked_areas, considered:considered};
+			}
+
+			function addCollisionStep(subject, step){
+				subject.x += step.x;
+				subject.y += step.y;
+			}
+
+			function checkForCollisionsDynamic(subject, objects, min_width, min_height){
+				
+				//define the large coordinate box
+				var box = {};
+				box.width = Math.abs(subject.width)+Math.abs(subject.v_x);
+				box.height = Math.abs(subject.height)+Math.abs(subject.v_y);
+				var use_box_x = false;
+				var use_box_y = false;
+				if(subject.v_x >= 0){ 
+					box.x = subject.x;
+				}else{ 
+					use_box_x = true;
+					box.x = subject.x+subject.v_x;
+				}
+
+				if(subject.v_y >= 0){ 
+					box.y = subject.y;
+				}else{ 
+					box.y = subject.y+subject.v_y;
+					use_box_y = true;
+				}
+
+				//Detect things in large collision box
+				var candidates = checkForCollisionsDiscrete(box, objects);
+				if(!candidates) return false;
+
+				//Determine ruling co-ordinate
+				var prime_step = {};
+				var sec_step = {};
+				var steps = 0;
+				var sec_per_step = 0;
+				var clone = {};
+				if(Math.abs(subject.v_x)>Math.abs(subject.v_y)){
+					prime_step.x = subject.width * (subject.v_x<0 ? -1: 1);//subject.width;
+					prime_step.y = 0;	
+					sec_step.x = 0;
+					sec_step.y = subject.v_y<0 ? -1: 1;
+					steps = Math.ceil(Math.abs(subject.v_x)/subject.width); //need to subtract one to prevent over reach, do the same for y
+					sec_per_step = Math.abs((subject.v_y/subject.v_x)*subject.width);
+					clone.width = subject.width*2, 
+					clone.height = subject.height+sec_per_step;
+					clone.x = subject.x-subject.width*use_box_x;
+					clone.y = subject.y-sec_per_step*use_box_y;
+				}else{
+					prime_step.y = subject.height * (subject.v_y<0 ? -1: 1);//subject.height;
+					prime_step.x = 0;
+					sec_step.y = 0;
+					sec_step.x = subject.v_x<0 ? -1: 1;
+					steps = Math.ceil(Math.abs(subject.v_y)/subject.height);
+					console.log(subject.v_y, subject.height, subject.v_y/subject.height, steps);
+					sec_per_step = Math.abs((subject.v_x/subject.v_y)*subject.height);//Not sure about this math. Check on paper.
+					clone.width = subject.width+sec_per_step;
+					clone.height = subject.height*2;
+					clone.x = subject.x-sec_per_step*use_box_x;
+					clone.y = subject.y-subject.height*use_box_y;
+
+				}
+
+
+				//check collisions in steps
+				var subject_clone = {x:subject.x, y:subject.y, width:subject.width, height:subject.height};
+				var tracked_steps = 0;
+				var rounds = 0;
+				do{
+					console.log("running for "+(steps-tracked_steps)+" steps.");
+					var results = checkForCollisionsContin(clone, candidates, prime_step, steps-tracked_steps, sec_step, sec_per_step);
+						
+					if(results.result){
+				
+						var off_step_guage = 0;
+						for(var s = 0; s<results.steps; s++){
+							addCollisionStep(subject_clone, prime_step);
+							off_step_guage += sec_per_step;
+							
+							while(off_step_guage>1){
+								addCollisionStep(subject_clone, sec_step);	
+								off_step_guage -= 1;
+							}		
+						}
+						
+						var inner_prime_step = {}; 
+						var inner_sec_step = {}; 
+						var inner_steps = 0;
+						var inner_sec_per_step = 0;
+						//Resize steps
+						if(Math.abs(subject.v_x)>Math.abs(subject.v_y)){
+							inner_prime_step.x = subject.v_x<0 ? -1: 1;
+							inner_prime_step.y = 0;	
+							inner_sec_step.x = 0;
+							inner_sec_step.y = subject.v_y<0 ? -1: 1;
+							inner_steps = subject.width;
+							inner_sec_per_step = Math.abs(subject.v_y/subject.v_x);
+						}else{
+							inner_prime_step.y = subject.v_y<0 ? -1: 1;
+							inner_prime_step.x = 0;
+							inner_sec_step.y = 0;
+							inner_sec_step.x = subject.v_x<0 ? -1: 1;
+							inner_steps = subject.height;
+							inner_sec_per_step = Math.abs(subject.v_x/subject.v_y)//Not sure about this math. Check on paper.
+						}
+				
+						//incrementally move 1 pixel at a time until collision is found. update secondary dimension accordingly. 
+						console.log(JSON.stringify(subject_clone), JSON.stringify(results.candidates));
+						var detailedResults = checkForCollisionsContin(subject_clone, results.candidates, inner_prime_step, inner_steps, inner_sec_step, inner_sec_per_step);
+					
+						if(detailedResults.result){
+							console.log("detected in detail")
+							return detailedResults;
+						}
+
+						off_step_guage = 0;
+						for(var s = 0; s<=results.steps; s++){
+							addCollisionStep(clone, prime_step);
+							off_step_guage += sec_per_step;
+							
+							while(off_step_guage>1){
+								addCollisionStep(clone, sec_step);	
+								off_step_guage -= 1;
+							}
+						}
+						off_step_guage = 0;
+						addCollisionStep(subject_clone, prime_step);
+						off_step_guage += sec_per_step;
+							
+						while(off_step_guage>1){
+							addCollisionStep(subject_clone, sec_step);	
+							off_step_guage -= 1;
+						}		
+					}
+					tracked_steps += results.steps+1;
+					console.log(tracked_steps, steps);
+					rounds+=1;		
+				}while(tracked_steps<steps);
+				console.log("exited loop after "+rounds+"rounds");
+				//var lastResults = checkCollisionDiscrete({},)
+				results.result= false;	
+				return results;// false;//results.candidates;
+			}
+		</script>
+		<script src="testCollisionLib.js">
+			var subject = {x:250, y:250, width:100, height:100}
+			var target = {x:0, y:0}
+			var obstacles = [
+			 {colliding:false, x:0, y:0, width:50, height:50},
+			 {colliding:false, x:250, y:175, width:50, height:1},
+			 {colliding:false, x:175, y:300, width:1, height:50},
+			 //{colliding:false, x:400, y:200, width:50, height:50},
+			 //{colliding:false, x:370, y:200, width:1, height:50},
+			 {colliding:false, x:360, y:400, width:50, height:1},
+			 {colliding:false, x:450, y:400, width:50, height:1},
+			 {colliding:false, x:100, y:450, width:50, height:1},
+			 {colliding:false, x:330, y:205, width:50, height:1}
+			 /*{coliding:false, x:250, y:250, width:50, height:50}
+			 {coliding:false, x:250, y:250, width:50, height:50}
+			*/]
+
+			var is_colliding = false;
+			var detailedSearchRegions = [];
+			var candidates = [];
+
+			//collision cycle
+			function checkForCollisions(){
+				subject.v_x = target.x-subject.x;
+				subject.v_y = target.y-subject.y;
+
+				for(var i in obstacles){
+					obstacles[i].colliding = false;
+				}
+				is_colliding = false;
+
+				console.log("target is "+JSON.stringify(target));
+				console.log("subject is "+JSON.stringify(subject));
+
+				candidates = [];
+				detailedSearchRegions = [];
+				var result = checkForCollisionsDynamic(subject, obstacles, 1, 1);
+				if(result){
+					detailedSearchRegions = result.checked_areas;
+					candidates = result.considered;
+					console.log(detailedSearchRegions.length);
+					//console.log("returned collision with "+result.length+" objects");
+					for(i in result.candidates){
+						//console.log("set_colliding to true");
+						result.candidates[i].colliding=true;
+					}
+					is_colliding = result.result;
+				}
+			}
+
+			//setInterval(checkForCollisions, 250);
+
+			//window stuff
+			window.requestAnimFrame = (function(callback) {
+			        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
+			        function(callback) {
+			          window.setTimeout(callback, 1000 / 60);
+			        };
+			      })();
+
+			var canvas = document.getElementById("canvas");
+			var ctx = canvas.getContext("2d");
+
+			//paint cycle
+			function paintTestArea(){
+				ctx.clearRect(0,0,1000,1000);
+				for(var i in obstacles){	
+					if(obstacles[i].colliding){
+						ctx.fillStyle = "rgb(255,0,0)";
+						ctx.fillRect(obstacles[i].x,obstacles[i].y,obstacles[i].width,obstacles[i].height);
+					}else{
+						ctx.fillStyle = "rgb(0,0,0)";
+						ctx.fillRect(obstacles[i].x,obstacles[i].y,obstacles[i].width,obstacles[i].height);
+					
+					}
+				}
+				
+				ctx.fillStyle = "rgb(0,0,255)";
+				ctx.fillRect(subject.x, subject.y, subject.width, subject.height);
+
+
+				ctx.beginPath();
+				ctx.moveTo(subject.x, subject.y);
+				ctx.lineTo(target.x, target.y);
+				
+				ctx.moveTo(subject.x+subject.width, subject.y);
+				ctx.lineTo(target.x+subject.width, target.y);
+				
+				ctx.moveTo(subject.x, subject.y+subject.height);
+				ctx.lineTo(target.x, target.y+subject.height);
+				
+				ctx.moveTo(subject.x+subject.width, subject.y+subject.height);
+				ctx.lineTo(target.x+subject.width, target.y+subject.height);
+				ctx.stroke();	
+
+				ctx.fillStyle = "rgb(255,0,255)";
+				//console.log(JSON.stringify(detailedSearchRegions));
+				for(var j in detailedSearchRegions){
+					//console.log("drawing a rectangle on "+JSON.stringify(detailedSearchRegions[j]));
+					ctx.fillRect(detailedSearchRegions[j].x, detailedSearchRegions[j].y, detailedSearchRegions[j].width, detailedSearchRegions[j].height);
+				}
+				
+				ctx.fillStyle = "rgb(123,0,255)";
+				//console.log(JSON.stringify(detailedSearchRegions));
+				/*for(var k in considered){
+					console.log("drawing a rectangle on "+JSON.stringify(detailedSearchRegions[j]));
+					ctx.fillRect(detailedSearchRegions[j].x, detailedSearchRegions[j].y, detailedSearchRegions[j].width, detailedSearchRegions[j].height);
+				}*/
+			//	console.log("did I draw "+j+" rectangles?");
+				if(is_colliding)
+					ctx.fillStyle = "rgb(255,0,0)";
+				else
+					ctx.fillStyle = "rgb(0,255,0)";
+				ctx.fillRect(target.x, target.y, subject.width, subject.height);
+			}
+
+			setInterval(paintTestArea, 30);
+
+			canvas.addEventListener("mousemove", function(e){
+			        target.x = Math.floor((e.pageX - this.offsetLeft));
+			        target.y = Math.floor((e.pageY - this.offsetTop));
+			});
+
+			canvas.addEventListener("mouseup", function(e){
+				  checkForCollisions();
+			    //    target.x = Math.floor((e.pageX - this.offsetLeft));
+			      //  target.y = Math.floor((e.pageY - this.offsetTop));
+			});
+
+		</script>
+	</body>
+</html>

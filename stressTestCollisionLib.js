@@ -11,7 +11,7 @@ var balls = [
 
 for(var i = 1; i<8; i++){
 	for(var j = 1; j<8; j++){
-		balls.push({x:i*50 + 100, y:j*50 + 100, width:10, height:10, v_x:Math.ceil(Math.random()*4), v_y:Math.ceil(Math.random()*4), mobile:true})
+		balls.push({x:i*50 + 100, y:j*50 + 100, width:10, height:10, v_x:Math.ceil(Math.random()*9), v_y:Math.ceil(Math.random()*9), mobile:true})
 	}
 }
 
@@ -51,8 +51,8 @@ function handleCollisionForBall(i){
 	}
 	
 	var ball_results = checkForCollisionsDynamic(balls[i], candidates);
-	var embedded_collisions =[]; //checkForCollisionsDiscrete(balls[i], candidates);
-
+	var embedded_collisions = checkForCollisionsDiscrete(balls[i], candidates);
+	//Handle embedded collisions differently. Need to do it for walls too.
 
 	if(ball_results){
 		for(r in ball_results){
